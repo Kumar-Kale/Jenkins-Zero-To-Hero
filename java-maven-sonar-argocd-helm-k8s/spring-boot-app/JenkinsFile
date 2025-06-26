@@ -1,10 +1,10 @@
 pipeline {
   agent {
-    docker {
-      image 'abhishekf5/maven-abhishek-docker-agent:v1'
-      args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
-    }
+  docker {
+    image 'abhishekf5/maven-abhishek-docker-agent:v1'
+    args '--user root --add-host=host.docker.internal:host-gateway -v /var/run/docker.sock:/var/run/docker.sock'
   }
+}
   stages {
     stage('Checkout') {
       steps {
@@ -20,9 +20,9 @@ pipeline {
       }
     }
     stage('Static Code Analysis') {
-  environment {
-    SONAR_URL = "https://192.168.235.220:9000"
-  }
+      environment {
+        SONAR_URL = "http://host.docker.internal:9000"
+}
   steps {
     withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
       sh '''
@@ -35,7 +35,7 @@ pipeline {
 
     stage('Build and Push Docker Image') {
       environment {
-        DOCKER_IMAGE = "abhishekf5/ultimate-cicd:${BUILD_NUMBER}"
+        DOCKER_IMAGE = "kumardocker12/ultimate-cicd:${BUILD_NUMBER}"
         // DOCKERFILE_LOCATION = "java-maven-sonar-argocd-helm-k8s/spring-boot-app/Dockerfile"
         REGISTRY_CREDENTIALS = credentials('docker-cred')
       }
